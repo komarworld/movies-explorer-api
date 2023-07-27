@@ -5,21 +5,11 @@ const movieRoutes = require('./movies');
 const { createUser, login, logout } = require('../controllers/user');
 const auth = require('../middlewares/auth');
 const NotFoundError = require('../errors/not-found-error');
+const { validateCreateUser, validateLogin } = require('../middlewares/validation');
 
-router.post('/signup', celebrate({
-  body: Joi.object().keys({
-    email: Joi.string().required().email(),
-    password: Joi.string().required(),
-    name: Joi.string().min(2).max(30),
-  }),
-}), createUser);
+router.post('/signup', validateCreateUser, createUser);
 
-router.post('/signin', celebrate({
-  body: Joi.object().keys({
-    email: Joi.string().required().email(),
-    password: Joi.string().required(),
-  }),
-}), login);
+router.post('/signin', validateLogin, login);
 
 router.use(auth);
 

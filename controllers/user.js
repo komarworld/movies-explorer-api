@@ -48,7 +48,8 @@ const createUser = (req, res, next) => {
         name,
       })
         .then((newUser) => {
-          res.status(CREATED).send(newUser);
+          const { _id } = newUser;
+          res.status(CREATED).send({ _id, email, name });
         })
         .catch((err) => {
           if (err instanceof mongoose.Error.ValidationError) {
@@ -76,9 +77,9 @@ const getUserInfo = (req, res, next) => {
 
 // обновить даннные пользователя
 const updateUser = (req, res, next) => {
-  const { id } = req.user;
+  const { _id } = req.user;
   const { name, email } = req.body;
-  return User.findByIdAndUpdate(id, { name, email }, {
+  User.findByIdAndUpdate(_id, { name, email }, {
     new: true,
     runValidators: true,
   })
@@ -89,10 +90,13 @@ const updateUser = (req, res, next) => {
       res.send(user);
     })
     .catch((err) => {
-      if (err instanceof mongoose.Error.ValidationError) {
-        return next(new BadRequestError('Переданы некорректные данные при создании пользователя'));
+      if (err.code === 11000) {
+        next(new ConflictError('Пользователь с таким email уже существует'));
+      } else if (err instanceof mongoose.Error.ValidationError) {
+        next(new BadRequestError('Переданы некорректные данные при создании пользователя'));
+      } else {
+        next(err);
       }
-      return next(err);
     });
 };
 
