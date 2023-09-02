@@ -1,51 +1,68 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const UnAuthorizedError = require('../errors/unauthorized-error');
 
 const User = require('../models/user');
 const BadRequestError = require('../errors/bad-request-error'); // 400
 const NotFoundError = require('../errors/not-found-error'); // 404
 const ConflictError = require('../errors/conflict-error'); // 409
 
+const { NODE_ENV, JWT_SECRET } = process.env;
+
 const {
   STATUS_OK,
   CREATED,
 } = require('../utils/constants');
 
-const { NODE_ENV, JWT_SECRET } = process.env;
+/*
+const login = (req, res, next) => {
+  const { email, password } = req.body;
+  User.findOne({ email }).select('+password')
+    .then((user) => {
+      if (!user) {
+        return Promise.reject(new UnAuthorizedError('Неправильные почта или пароль'));
+      }
+      return bcrypt.compare(password, user.password)
+        .then((matched) => {
+          if (!matched) {
+            return Promise.reject(new UnAuthorizedError('Неправильные почта или пароль'));
+          }
+          const token = jwt.sign(
+            { _id: user._id },
+            NODE_ENV === 'production' ? JWT_SECRET : 'super-secret-key',
+            { expiresIn: '7d' },
+          );
+          return res.send({ token });
+        })
+        .catch(next);
+    })
+    .catch(next);
+};
+*/
+
+
 // вход
 const login = (req, res, next) => {
   const { email, password } = req.body;
   return User.findUserByCredentials(email, password)
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, NODE_ENV === 'production' ? JWT_SECRET : 'super-secret-key', { expiresIn: '7d' });
-      res.cookie('jwt', token, {
-        maxAge: 604800000,
-        httpOnly: true,
-        sameSite: true,
-      }).send({ token, user });
+      res.send({ token, user });
     })
     .catch(next);
 };
-// выход
-const logout = (req, res, next) => {
-  res.clearCookie('jwt', {
-    httpOnly: true,
-    sameSite: true,
-  })
-    .send({ message: 'Успешный выход' });
-  next();
-};
+
 
 // создание пользователя
 const createUser = (req, res, next) => {
-  const { email, password, name } = req.body;
+  const { name, email, password } = req.body;
   bcrypt.hash(password, 10)
     .then((hash) => {
       User.create({
+        name,
         email,
         password: hash,
-        name,
       })
         .then((newUser) => {
           const { _id } = newUser;
@@ -100,9 +117,20 @@ const updateUser = (req, res, next) => {
     });
 };
 
+/*
+// выход- добавить для куки
+const logout = (req, res, next) => {
+  res.clearCookie('jwt', {
+    httpOnly: true,
+    sameSite: true,
+  })
+    .send({ message: 'Успешный выход' });
+  next();
+};
+*/
+
 module.exports = {
   login,
-  logout,
   createUser,
   getUserInfo,
   updateUser,

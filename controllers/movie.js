@@ -22,8 +22,25 @@ const getMovies = (req, res, next) => {
 };
 
 const createMovie = (req, res, next) => {
-  const { _id } = req.user;
-  Movie.create({ owner: _id, ...req.body })
+  const {
+    country, director, duration, year, description, image,
+    trailerLink, thumbnail, movieId, nameRU, nameEN,
+  } = req.body;
+  const owner = req.user._id;
+  Movie.create({
+    country,
+    director,
+    duration,
+    year,
+    description,
+    image,
+    trailerLink,
+    thumbnail,
+    owner,
+    movieId,
+    nameRU,
+    nameEN,
+  })
     .then((movie) => res.status(CREATED).send(movie))
     .catch((err) => {
       if (err instanceof mongoose.Error.ValidationError) {
@@ -43,7 +60,7 @@ const deleteMovie = (req, res, next) => {
       if (movie.owner.toString() !== req.user._id) {
         throw new ForbiddenError('Нет прав для удаления фильма');
       }
-      Movie.deleteOne(movie)
+      Movie.deleteOne({ _id: movieId })
         .then((deletedMovie) => res.status(STATUS_OK).send(deletedMovie))
         .catch((err) => {
           if (err instanceof mongoose.Error.ValidationError) {

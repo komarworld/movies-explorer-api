@@ -11,8 +11,8 @@ const validateUpdateUser = celebrate({
 const validateCreateUser = celebrate({
   body: Joi.object().keys({
     email: Joi.string().required().email(),
-    password: Joi.string().required(),
-    name: Joi.string().min(2).max(30),
+    password: Joi.string(),
+    name: Joi.string().min(2).max(30).required(),
   }),
 });
 
@@ -34,7 +34,7 @@ const validateCreateMovie = celebrate({
 
 const validateDeleteMovie = celebrate({
   params: Joi.object().keys({
-    _id: Joi.string().required().length(24).hex(),
+    movieId: Joi.string().required().length(24).hex(),
   }),
 });
 
