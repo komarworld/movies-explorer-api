@@ -3,7 +3,6 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const { errors } = require('celebrate');
-const cors = require('cors');
 const helmet = require('helmet');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 const routes = require('./routes/index');
@@ -14,6 +13,7 @@ const {
   PORT,
   MONGO_URL,
 } = require('./utils/config');
+const { corsMid } = require('./middlewares/cors');
 
 mongoose.connect(MONGO_URL).then(() => {
   console.log('connected to db');
@@ -22,7 +22,7 @@ mongoose.connect(MONGO_URL).then(() => {
 const app = express();
 
 app.use(helmet());
-app.use(cors());
+app.use(corsMid);
 app.use(express.json());
 
 app.use(requestLogger);
